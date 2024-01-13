@@ -4,7 +4,6 @@ writed by Xu and Yu (2021) PIO
 
 added the breaking_stress by Zhang and Yu (2024) JPO
 
-![fig1](https://github.com/anyifang/e-AWBLM/assets/89235013/c34a4eaa-037c-4037-91cf-a4a8de48211f)
+![figure1](https://github.com/anyifang/e-AWBLM/assets/89235013/c6d6a062-bffd-4721-adff-fbc6e1f06bde)
 
-
-![fig3](https://github.com/anyifang/e-AWBLM/assets/89235013/a54a6ba8-5505-41a1-9668-aba04ef2e0c2)
+![figure3](https://github.com/anyifang/e-AWBLM/assets/89235013/b2a6a174-3be6-4fb1-a660-f93ee3f234f3)
