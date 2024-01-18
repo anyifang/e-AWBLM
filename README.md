@@ -12,5 +12,7 @@ Figure 1. Sketch of the enhanced atmospheric wave boundary layer model.
 ![figure3](https://github.com/anyifang/e-AWBLM/assets/89235013/b2a6a174-3be6-4fb1-a660-f93ee3f234f3)
 Figure 3. The wind stress coefficients (a) at 15 m water depth, (b) at 80 m water depth and (c) in the deep water.
 
-Copyright (C) 2021 Coastal family Developers
+
+Copyright 2024 Coastal Engineering Family, Department of Hydraulic Engineering, Tsinghua University
+
 Please contact with zayf21@mails.tsinghua.edu.cn if you have any problem with the code.
