@@ -6,10 +6,13 @@ Xu, Y., and X. Yu, 2021: Enhanced atmospheric wave boundary layer model for eval
 
 added the breaking_stress by Zhang and Yu (2024) JPO
 
+  Report Bugs and Issues to : https://github.com/UW-Hydro/VIC/issues
+  VIC Users Email Listserve : vic_users@u.washington.edu 
 ![figure1](https://github.com/anyifang/e-AWBLM/assets/89235013/c6d6a062-bffd-4721-adff-fbc6e1f06bde)
 Figure 1. Sketch of the enhanced atmospheric wave boundary layer model. 
 
 ![figure3](https://github.com/anyifang/e-AWBLM/assets/89235013/b2a6a174-3be6-4fb1-a660-f93ee3f234f3)
 Figure 3. The wind stress coefficients (a) at 15 m water depth, (b) at 80 m water depth and (c) in the deep water.
 
+Copyright (C) 2021 Coastal family Developers
 Please contact with zayf21@mails.tsinghua.edu.cn if you have any problem with the code.
