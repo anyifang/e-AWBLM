@@ -6,8 +6,6 @@ Xu, Y., and X. Yu, 2021: Enhanced atmospheric wave boundary layer model for eval
 
 added the breaking_stress by Zhang and Yu (2024) JPO
 
-  Report Bugs and Issues to : https://github.com/UW-Hydro/VIC/issues
-  VIC Users Email Listserve : vic_users@u.washington.edu 
 ![figure1](https://github.com/anyifang/e-AWBLM/assets/89235013/c6d6a062-bffd-4721-adff-fbc6e1f06bde)
 Figure 1. Sketch of the enhanced atmospheric wave boundary layer model. 
 
