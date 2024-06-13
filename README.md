@@ -1,7 +1,7 @@
 2D e-AWBLM
 ---------------------------------------------------------------------------------
 
-writed by Xu and Yu (2021) PIO
+Writed by Xu and Yu (2021) PIO
 
 Added the breaking_stress by Zhang and Yu (2024) JPO
 
