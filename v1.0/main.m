@@ -5,6 +5,9 @@
 % refer to Moon (2004) to solve the taov iteratively
 % Zhang and Yu enhanced by adding breaking-induce stress 2023 / 4 /20
 % The default unit is /kg /m /s
+
+% Please contact with zayf21@mails.tsinghua.edu.cn if you have any problem with
+% code or you have some methods to modify this code.
 close all
 clear
 addpath('../data')
@@ -12,11 +15,8 @@ addpath('../function')
 load ('k_store.mat')
 %% Cd measurement
 %RGB = [249, 87, 56; 238, 150, 75; 244, 211, 94; 13, 59, 102]/256;
-RGB = othercolor('YlGnBu9');
-figure(3)
-Function_plot_Cd_measure(RGB)
 %% e_AWLBM
-u10_arr = 1:5:71;
+u10_arr = [0.1 1:1:71];
 H_arr = [15 80 500];
 fetch_ = 10^5; % wind fetch
 Cd = zeros(length(u10_arr),1);
@@ -48,7 +48,7 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
         b_kmin = 0.001;   % Melville, Veron, and White (2002) 0.007
         b_kmax= 0.1;
         C_beta = 25; % empirical constant for sea spray
-        C_db = 0.35; % pressure drop coefficient, Kudryavtsev（2014）
+        C_b = 0.35; % pressure drop coefficient, Kudryavtsev（2014）
         
         delta = 0.05; % decay length scale of the breaking-wave induced stress
         rou_w = 10^3; % water density
@@ -58,12 +58,11 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
       
         fai_k_the_arr_3rd = zeros(length(the_arr), length(k_arr));
         fai_k_the_arr_4th = zeros(length(the_arr), length(k_arr));
-        U10up =U10;
         for i = 1 : length(the_arr)
             for j = 1 : length(k_arr)
                 if abs(the_arr(i)) <= pi/2
-                    fai_k_the_arr_3rd(i, j) = S_JON_k_the_sh_highequ_3rd(k_arr(j),the_arr(i),U10up,H,fetch_,C_beta,'XY2021');  
-                    fai_k_the_arr_4th(i, j) = S_JON_k_the_sh_highequ_4th(k_arr(j),the_arr(i),U10up,H,fetch_,C_beta,'XY2021');   
+                    fai_k_the_arr_3rd(i, j) = S_JON_k_the_sh_highequ_3rd(k_arr(j),the_arr(i),U10,H,fetch_,C_beta,'XY2021');  
+                    fai_k_the_arr_4th(i, j) = S_JON_k_the_sh_highequ_4th(k_arr(j),the_arr(i),U10,H,fetch_,C_beta,'XY2021');   
                 else
                     fai_k_the_arr_3rd(i, j) = 0;
                     fai_k_the_arr_4th(i, j) = 0;
@@ -72,14 +71,14 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
         end
         
         fai_k_the_arr = (fai_k_the_arr_4th+fai_k_the_arr_3rd)/2;   
-        W_quanzhong_before = 0.5;
-        for diedai_quanzhong = 1 : 200
+        W_weight_before = 0.5;
+        for iteration_weight = 1 : 200
            %% to calculate TMA wave spectrum in arbitrary water depth
             % this part is calculted based on XY(2021)
-            jifen_1 = zeros(length(k_arr),1); % to integral in theta
+            integral_1 = zeros(length(k_arr),1); % to integral in theta
             for i = 1 : length(k_arr)
                 fai_arr = fai_k_the_arr(:, i)' * k_arr(i); 
-                jifen_1(i) = sum(fai_arr(2:end-1))*2*pi/36 + (fai_arr(1)+fai_arr(end))*2*pi/36/2;
+                integral_1(i) = sum(fai_arr(2:end-1))*2*pi/36 + (fai_arr(1)+fai_arr(end))*2*pi/36/2;
             end
             del_k_arr = zeros(length(k_arr),1);
             if length(k_arr) > 2
@@ -89,14 +88,14 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
             end
             del_k_arr(1) = (k_arr(2) - k_arr(1)) / 2;
             del_k_arr(end) = (k_arr(end) - k_arr(end-1)) / 2; % to integral in k
-            jifen_2 = sum(jifen_1 .* del_k_arr);
-            Hs_o = 4*sqrt(jifen_2); 
+            integral_2 = sum(integral_1 .* del_k_arr);
+            Hs_o = 4*sqrt(integral_2); 
  
             f_arr = sqrt(9.81/4/pi^2 * k_arr .* tanh(k_arr*H));  
-            jifen_1 = zeros(length(f_arr),1); 
+            integral_1 = zeros(length(f_arr),1); 
             for i = 1 : length(f_arr)
                 fai_arr_f = fai_k_the_arr(:, i)' * k_arr(i) * 8*pi^2*f_arr(i) / (9.81*tanh(k_arr(i)*H) + 9.81*k_arr(i)*H*(sech(k_arr(i)*H))^2) * f_arr(i); 
-                jifen_1(i) = sum(fai_arr_f(2:end-1))*2*pi/36 + (fai_arr_f(1)+fai_arr_f(end))*2*pi/36/2;
+                integral_1(i) = sum(fai_arr_f(2:end-1))*2*pi/36 + (fai_arr_f(1)+fai_arr_f(end))*2*pi/36/2;
             end
             del_f_arr = zeros(length(f_arr),1);
             if length(f_arr) > 2
@@ -106,56 +105,55 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
             end
             del_f_arr(1) = (f_arr(2) - f_arr(1)) / 2;
             del_f_arr(end) = (f_arr(end) - f_arr(end-1)) / 2;
-            jifen_2 = sum(jifen_1 .* del_f_arr);
-            Tm01 = (Hs_o/4)^2 / jifen_2;
+            integral_2 = sum(integral_1 .* del_f_arr);
+            Tm01 = (Hs_o/4)^2 / integral_2;
             Ur = 9.81/8/sqrt(2)/pi^2 * Hs_o * Tm01^2 / H^2;
             if Ur <= 0.25
-                W_quanzhong = 1;
+                W_weight = 1;
             elseif Ur >= 1
-                W_quanzhong = 0;
+                W_weight = 0;
             else
-                W_quanzhong = ((1-Ur)/0.75);
+                W_weight = ((1-Ur)/0.75);
             end
-            W_quanzhong_after = W_quanzhong;
-            if abs(W_quanzhong_after - W_quanzhong_before) <0.01
+            W_weight_after = W_weight;
+            if abs(W_weight_after - W_weight_before) <0.01
                 break
             end
-            W_quanzhong_before = W_quanzhong_after;
-            fai_k_the_arr = fai_k_the_arr_4th * W_quanzhong_after + fai_k_the_arr_3rd * (1-W_quanzhong_after);   
+            W_weight_before = W_weight_after;
+            fai_k_the_arr = fai_k_the_arr_4th * W_weight_after + fai_k_the_arr_3rd * (1-W_weight_after);   
         end
       %% calculate gama_b
-       % Epslion_b_mean =   [ 0.0625    0.0571    0.0501    0.0448    0.0339];  % 10 20 50 100 500
-         Epslion_b_mean =   [ 0.0580    0.0456   0.0339];  % 15 80 500
-        %Epslion_b = Epslion_b_mean(n_H_arr)/Epslion_b_mean(end)*0.3;
-        Epslion_b = gama_b_U_H_quick(U10,H,k_store)/gama_b_U_H_quick(U10,500,k_store)*0.3;
-        %Epslion_b = 16*Epslion_b_U_H(U10,H)
-        Epslion_b = min(0.6,Epslion_b);
-        Epslion_b = max(0.2,Epslion_b);
-        %Epslion_b = 0.35
-        Weigth =W_quanzhong_after;  % 10m 100 1000m
-        k_arr_AFS = Epslion_b /delta * k_arr;
-        w_arr_AFS = sqrt(k_arr_AFS* 9.81 .* tanh(k_arr_AFS * H) ); 
-        c_arr_AFS = 9.81 ./ w_arr_AFS .* tanh(k_arr_AFS * H); 
-        fai_k_the_arr_3rd_AFS = zeros(length(the_arr), length(k_arr));
-        fai_k_the_arr_4th_AFS = zeros(length(the_arr), length(k_arr));
+        %gama = gama_mean(n_H_arr)/gama_mean(end)*0.3;
+        gama = gama_b_U_H(U10,H)/gama_b_U_H(U10,H);
+        %gama = gama_b_U_H_quick(U10,H,k_store)/gama_b_U_H_quick(U10,500,k_store)*0.3;
+        %gama = 16*gama_U_H(U10,H)
+        gama = min(0.6,gama);
+        gama = max(0.2,gama);
+        %gama = 0.35
+        Weigth =W_weight_after;  % 10m 100 1000m
+        k_arr_breaking = gama /delta * k_arr;
+        w_arr_breaking = sqrt(k_arr_breaking* 9.81 .* tanh(k_arr_breaking * H) ); 
+        c_arr_breaking = 9.81 ./ w_arr_breaking .* tanh(k_arr_breaking * H); 
+        fai_k_the_arr_3rd_breaking = zeros(length(the_arr), length(k_arr));
+        fai_k_the_arr_4th_breaking = zeros(length(the_arr), length(k_arr));
         for i = 1 : length(the_arr)
             for j = 1 : length(k_arr)
                 if abs(the_arr(i)) <= pi/2
-                    fai_k_the_arr_3rd_AFS (i, j) = S_JON_k_the_sh_highequ_3rd(k_arr_AFS (j),the_arr(i),U10up,H,fetch_,C_beta,'XY2021');
-                    fai_k_the_arr_4th_AFS (i, j) = S_JON_k_the_sh_highequ_4th(k_arr_AFS (j),the_arr(i),U10up,H,fetch_,C_beta,'XY2021');
+                    fai_k_the_arr_3rd_breaking (i, j) = S_JON_k_the_sh_highequ_3rd(k_arr_breaking (j),the_arr(i),U10,H,fetch_,C_beta,'XY2021');
+                    fai_k_the_arr_4th_breaking (i, j) = S_JON_k_the_sh_highequ_4th(k_arr_breaking (j),the_arr(i),U10,H,fetch_,C_beta,'XY2021');
                 else
-                    fai_k_the_arr_3rd_AFS(i, j) = 0;
-                    fai_k_the_arr_4th_AFS(i, j) = 0;
+                    fai_k_the_arr_3rd_breaking(i, j) = 0;
+                    fai_k_the_arr_4th_breaking(i, j) = 0;
                 end
             end
         end
-        fai_k_the_arr_AFS = fai_k_the_arr_4th_AFS * W_quanzhong_after + fai_k_the_arr_3rd_AFS * (1-W_quanzhong_after);   %Wave spectrum at arbitrary water depth
+        fai_k_the_arr_breaking = fai_k_the_arr_4th_breaking * W_weight_after + fai_k_the_arr_3rd_breaking * (1-W_weight_after);   %Wave spectrum at arbitrary water depth
         
        %%  The main iterative part of the procedure such that U(10) = U10.
-        for diedai_taov = 1 : 200
+        for iteration_taov = 1 : 200
                  % wave growth rate
             beta_g = zeros(length(k_arr), length(the_arr));
-            beta_g_AFS = zeros(length(k_arr), length(the_arr)); 
+            beta_g_breaking = zeros(length(k_arr), length(the_arr)); 
             tao_tx_z = zeros(length(k_arr),1); 
             tao_ty_z = zeros(length(k_arr),1);
            
@@ -169,9 +167,9 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
             h_the_arr = (cos(the_arr)*cos_taov + sin(the_arr)*sin_taov).^2; 
             h_the_arr(abs(the_arr) > pi/2) = 0;
             beta_g(end, :) = C_beta * w_arr(end) / rou_w / c_arr(end)^2 * tao_v * h_the_arr;                    
-            beta_g_AFS(end, :) = C_beta * w_arr_AFS(end) / rou_w / c_arr_AFS(end)^2 * tao_v * h_the_arr;  
-            lamda_AFS_the_arr(:,length(k_arr)) =zeros(length(the_arr),1) ;
-            jifen_1_lamda_k_AFS(length(k_arr)) = 0;
+            beta_g_breaking(end, :) = C_beta * w_arr_breaking(end) / rou_w / c_arr_breaking(end)^2 * tao_v * h_the_arr;  
+            lamda_breaking_the_arr(:,length(k_arr)) =zeros(length(the_arr),1) ;
+            integral_1_lamda_k_breaking(length(k_arr)) = 0;
             tao_tx_z(end) = tao_vx;
             tao_ty_z(end) = tao_vy;
             zmin = delta / k_max;
@@ -184,107 +182,107 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
             zv = min(zv , zmin /2);
             z_arr1 = zv : (zmin-zv)/num3 : zmin; 
             z_arr_total = [z_arr1(1:end-1), z_arr(end:-1:2), z_arr3];
-            diedai_n_arr = zeros(length(k_arr)-1,1); %  Store the number of iterations to see if there is any non-convergence
-            for diedai_u = 1 : 100    %iterative part to calculate tao_b
+            iteration_n_arr = zeros(length(k_arr)-1,1); %  Store the number of iterations to see if there is any non-convergence
+            for iteration_u = 1 : 100    %iterative part to calculate tao_b
                   % Next iteratively solve for beta_g(k) and taot on each k.
                 % Since tao and beta are functions of each other, solving for both requires iteration
                 for i = length(k_arr)-1 : -1 : 1
-                    for diedai = 1 : 200
-                        diedai_before = beta_g(i,:);
+                    for iteration = 1 : 200
+                        iteration_before = beta_g(i,:);
                         % calculate lamda（k）based on  Sin = Sdb
-                        if k_arr_AFS(i)>20*pi  % Kudryavtsev（2001） tao_b = 0 with  k >20pi
-                            lamda_AFS_the_arr(:,i) =zeros(length(the_arr),1) ;
-                            jifen_1_lamda_k_AFS(i) = 0;
+                        if k_arr_breaking(i)>20*pi  % Kudryavtsev（2001） tao_b = 0 with  k >20pi
+                            lamda_breaking_the_arr(:,i) =zeros(length(the_arr),1) ;
+                            integral_1_lamda_k_breaking(i) = 0;
                         else
-                            fai_arr_slope_AFS =fai_k_the_arr_AFS(:, i)'  *  k_arr_AFS(i) ^4;
-                            jifen_1_slope_AFS(i) =2*( sum(fai_arr_slope_AFS(2:end-1))*2*pi/36 + (fai_arr_slope_AFS(1)+fai_arr_slope_AFS(end))*2*pi/36/2) ^0.5;
+                            fai_arr_slope_breaking =fai_k_the_arr_breaking(:, i)'  *  k_arr_breaking(i) ^4;
+                            integral_1_slope_breaking(i) =2*( sum(fai_arr_slope_breaking(2:end-1))*2*pi/36 + (fai_arr_slope_breaking(1)+fai_arr_slope_breaking(end))*2*pi/36/2) ^0.5;
                             %  Muller(2009)
-                            del_k_arr_AFS = zeros(length(k_arr_AFS),1);
-                            if length(k_arr_AFS) > 2
-                                for kk = 2 : length(k_arr_AFS)-1
-                                    del_k_arr_AFS(kk) = (k_arr_AFS(kk+1) - k_arr_AFS(kk-1))/2;
+                            del_k_arr_breaking = zeros(length(k_arr_breaking),1);
+                            if length(k_arr_breaking) > 2
+                                for kk = 2 : length(k_arr_breaking)-1
+                                    del_k_arr_breaking(kk) = (k_arr_breaking(kk+1) - k_arr_breaking(kk-1))/2;
                                 end
                             end
-                            del_k_arr_AFS(1) = (k_arr_AFS(2) - k_arr_AFS(1)) / 2;
-                            del_k_arr_AFS(end) = (k_arr_AFS(end) - k_arr_AFS(end-1)) / 2;
+                            del_k_arr_breaking(1) = (k_arr_breaking(2) - k_arr_breaking(1)) / 2;
+                            del_k_arr_breaking(end) = (k_arr_breaking(end) - k_arr_breaking(end-1)) / 2;
                             for num_s = 1:length(k_arr)  
-                                S_Muller_k_the_AFS =fai_k_the_arr_AFS(:, num_s)'  *  k_arr_AFS(num_s) ^3;
-                                S_Muller_k_AFS(num_s) =2*( sum(S_Muller_k_the_AFS(2:end-1))*2*pi/36 + (S_Muller_k_the_AFS(1)+S_Muller_k_the_AFS(end))*2*pi/36/2) ^0.5;
+                                S_Muller_k_the_breaking =fai_k_the_arr_breaking(:, num_s)'  *  k_arr_breaking(num_s) ^3;
+                                S_Muller_k_breaking(num_s) =2*( sum(S_Muller_k_the_breaking(2:end-1))*2*pi/36 + (S_Muller_k_the_breaking(1)+S_Muller_k_the_breaking(end))*2*pi/36/2) ^0.5;
                             end
-                            S_Muller_k_AFS_jifen = S_Muller_k_AFS(1:i+1);  
-                           del_k_arr_s_AFS = del_k_arr_AFS(1:i+1);
-                            W_quanzhong_after = 1;
-                            b_k_AFS_s(i)=min(max( 0.01*sum( S_Muller_k_AFS_jifen' .* del_k_arr_s_AFS )^0.5, b_kmin),b_kmax);   % spilling
-                            b_k_AFS_d(i)=min(max( 0.25*sum( S_Muller_k_AFS_jifen' .* del_k_arr_s_AFS )^2.5, b_kmin),b_kmax);   % plunging
-                            b_k_AFS(i)= W_quanzhong_after * b_k_AFS_d(i) + (1-W_quanzhong_after) *b_k_AFS_s(i);
+                            S_Muller_k_breaking_integral = S_Muller_k_breaking(1:i+1);  
+                           del_k_arr_s_breaking = del_k_arr_breaking(1:i+1);
+                            W_weight_after = 1;
+                            b_k_breaking_s(i)=min(max( 0.01*sum( S_Muller_k_breaking_integral' .* del_k_arr_s_breaking )^0.5, b_kmin),b_kmax);   % spilling
+                            b_k_breaking_d(i)=min(max( 0.25*sum( S_Muller_k_breaking_integral' .* del_k_arr_s_breaking )^2.5, b_kmin),b_kmax);   % plunging
+                            b_k_breaking(i)= W_weight_after * b_k_breaking_d(i) + (1-W_weight_after) *b_k_breaking_s(i);
   
-                            lamda_AFS_the_arr(:,i) =beta_g_AFS(i, :).*fai_k_the_arr_AFS(:, i)' * g ^3 /  c_arr_AFS(i)^6 / w_arr_AFS(i) / b_k_AFS(i) ; 
-                            jifen_1_lamda_k_AFS(i) = sum(lamda_AFS_the_arr(2:end-1,i))*2*pi/36 + (lamda_AFS_the_arr(1,i)+lamda_AFS_the_arr(end,i))*2*pi/36/2;
+                            lamda_breaking_the_arr(:,i) =beta_g_breaking(i, :).*fai_k_the_arr_breaking(:, i)' * g ^3 /  c_arr_breaking(i)^6 / w_arr_breaking(i) / b_k_breaking(i) ; 
+                            integral_1_lamda_k_breaking(i) = sum(lamda_breaking_the_arr(2:end-1,i))*2*pi/36 + (lamda_breaking_the_arr(1,i)+lamda_breaking_the_arr(end,i))*2*pi/36/2;
                         end
                         
-                        beta_g_jifen = beta_g(i:end,:); 
-                        k_jifen_arr = k_arr(i:end); 
-                        w_jifen_arr = w_arr(i:end); 
-                        k_jifen_arr_AFS =  k_arr_AFS (i:end);  
-                        w_jifen_arr_AFS = w_arr_AFS(i:end); 
+                        beta_g_integral = beta_g(i:end,:); 
+                        k_integral_arr = k_arr(i:end); 
+                        w_integral_arr = w_arr(i:end); 
+                        k_integral_arr_breaking =  k_arr_breaking (i:end);  
+                        w_integral_arr_breaking = w_arr_breaking(i:end); 
 
-                        jifenx_1 = zeros(length(k_jifen_arr),1); 
-                        jifeny_1 = zeros(length(k_jifen_arr),1); 
-                        jifenx_1_AFS = zeros(length(k_jifen_arr),1); 
-                        jifeny_1_AFS = zeros(length(k_jifen_arr),1); 
-                        for ii = 1 : length(k_jifen_arr)
-                            k_jifen = k_jifen_arr(ii);
-                            w_jifen = w_jifen_arr(ii);
-                            k_jifen_AFS = k_jifen_arr_AFS(ii);
-                            w_jifen_AFS = w_jifen_arr_AFS(ii);
-                            c_jifen_AFS  = w_jifen_AFS/k_jifen_AFS;
-                            the_jifen_arr = -pi : 2*pi/36 : pi; 
+                        integralx_1 = zeros(length(k_integral_arr),1); 
+                        integraly_1 = zeros(length(k_integral_arr),1); 
+                        integralx_1_breaking = zeros(length(k_integral_arr),1); 
+                        integraly_1_breaking = zeros(length(k_integral_arr),1); 
+                        for ii = 1 : length(k_integral_arr)
+                            k_integral = k_integral_arr(ii);
+                            w_integral = w_integral_arr(ii);
+                            k_integral_breaking = k_integral_arr_breaking(ii);
+                            w_integral_breaking = w_integral_arr_breaking(ii);
+                            c_integral_breaking  = w_integral_breaking/k_integral_breaking;
+                            the_integral_arr = -pi : 2*pi/36 : pi; 
                             fai_arr = fai_k_the_arr(:, i+ii-1)'; 
-                            jifenx_arr = beta_g_jifen(ii,:) .* fai_arr * rou_w * w_jifen * k_jifen .* cos(the_jifen_arr);
-                            jifenx_1(ii) = sum(jifenx_arr(2:end-1))*2*pi/36 + (jifenx_arr(1)+jifenx_arr(end))*2*pi/36/2;
-                            jifeny_arr = beta_g_jifen(ii,:) .* fai_arr * rou_w * w_jifen * k_jifen .* sin(the_jifen_arr);
-                            jifeny_1(ii) = sum(jifeny_arr(2:end-1))*2*pi/36 + (jifeny_arr(1)+jifeny_arr(end))*2*pi/36/2;
-                            lamda_arr =  lamda_AFS_the_arr(:, i+ii-1)';
+                            integralx_arr = beta_g_integral(ii,:) .* fai_arr * rou_w * w_integral * k_integral .* cos(the_integral_arr);
+                            integralx_1(ii) = sum(integralx_arr(2:end-1))*2*pi/36 + (integralx_arr(1)+integralx_arr(end))*2*pi/36/2;
+                            integraly_arr = beta_g_integral(ii,:) .* fai_arr * rou_w * w_integral * k_integral .* sin(the_integral_arr);
+                            integraly_1(ii) = sum(integraly_arr(2:end-1))*2*pi/36 + (integraly_arr(1)+integraly_arr(end))*2*pi/36/2;
+                            lamda_arr =  lamda_breaking_the_arr(:, i+ii-1)';
                           
-                            z_AFS = Epslion_b / k_jifen_AFS;
+                            z_breaking = gama / k_integral_breaking;
                             z0 = 10/(exp(1)-1);
-                            if diedai_u == 1
-                                ub = U10 * log((z_AFS+z0)/z0) * h_the_arr.^0.5 - c_jifen_AFS;
+                            if iteration_u == 1
+                                ub = U10 * log((z_breaking+z0)/z0) * h_the_arr.^0.5 - c_integral_breaking;
                                 ub = ub .* (ub > 0) ;
                             else
-                                [MIN, I ]=min(abs (z_arr_total-z_AFS));
-                                ub = (u_arr(I))* h_the_arr.^0.5  - c_jifen_AFS;
+                                [MIN, I ]=min(abs (z_arr_total-z_breaking));
+                                ub = (u_arr(I))* h_the_arr.^0.5  - c_integral_breaking;
                                 ub = ub .* (ub > 0) ;
                             end
-                            jifenx_arr_AFS = rou_a * 2 * Epslion_b * C_db * ub.^2 .* lamda_arr .* cos(the_jifen_arr) ;   %Kudryavtsev（2014）
-                            jifeny_arr_AFS = rou_a * 2 * Epslion_b * C_db * ub.^2 .* lamda_arr .* sin(the_jifen_arr) ;   %Kudryavtsev（2014）
-                            jifenx_1_AFS(ii) = sum(jifenx_arr_AFS(2:end-1))*2*pi/36 + (jifenx_arr_AFS(1)+jifenx_arr_AFS(end))*2*pi/36/2;
-                            jifeny_1_AFS(ii) = sum(jifeny_arr_AFS(2:end-1))*2*pi/36 + (jifeny_arr_AFS(1)+jifeny_arr_AFS(end))*2*pi/36/2;
+                            integralx_arr_breaking = rou_a * 2 * gama * C_b * ub.^2 .* lamda_arr .* cos(the_integral_arr) ;   %Kudryavtsev（2014）
+                            integraly_arr_breaking = rou_a * 2 * gama * C_b * ub.^2 .* lamda_arr .* sin(the_integral_arr) ;   %Kudryavtsev（2014）
+                            integralx_1_breaking(ii) = sum(integralx_arr_breaking(2:end-1))*2*pi/36 + (integralx_arr_breaking(1)+integralx_arr_breaking(end))*2*pi/36/2;
+                            integraly_1_breaking(ii) = sum(integraly_arr_breaking(2:end-1))*2*pi/36 + (integraly_arr_breaking(1)+integraly_arr_breaking(end))*2*pi/36/2;
                         end
-                        del_k_arr = zeros(length(k_jifen_arr),1);
-                        if length(k_jifen_arr) > 2
-                            for kk = 2 : length(k_jifen_arr)-1
-                                del_k_arr(kk) = (k_jifen_arr(kk+1) - k_jifen_arr(kk-1))/2;
+                        del_k_arr = zeros(length(k_integral_arr),1);
+                        if length(k_integral_arr) > 2
+                            for kk = 2 : length(k_integral_arr)-1
+                                del_k_arr(kk) = (k_integral_arr(kk+1) - k_integral_arr(kk-1))/2;
                             end
                         end
-                        del_k_arr(1) = (k_jifen_arr(2) - k_jifen_arr(1)) / 2;
-                        del_k_arr(end) = (k_jifen_arr(end) - k_jifen_arr(end-1)) / 2;
-                        jifenx_2 = sum(jifenx_1 .* del_k_arr);
-                        jifeny_2 = sum(jifeny_1 .* del_k_arr);
+                        del_k_arr(1) = (k_integral_arr(2) - k_integral_arr(1)) / 2;
+                        del_k_arr(end) = (k_integral_arr(end) - k_integral_arr(end-1)) / 2;
+                        integralx_2 = sum(integralx_1 .* del_k_arr);
+                        integraly_2 = sum(integraly_1 .* del_k_arr);
                         
-                        del_k_arr_AFS = zeros(length(k_jifen_arr_AFS),1);
-                        if length(k_jifen_arr_AFS) > 2
-                            for kk = 2 : length(k_jifen_arr_AFS)-1
-                                del_k_arr_AFS(kk) = (k_jifen_arr_AFS(kk+1) - k_jifen_arr_AFS(kk-1))/2;
+                        del_k_arr_breaking = zeros(length(k_integral_arr_breaking),1);
+                        if length(k_integral_arr_breaking) > 2
+                            for kk = 2 : length(k_integral_arr_breaking)-1
+                                del_k_arr_breaking(kk) = (k_integral_arr_breaking(kk+1) - k_integral_arr_breaking(kk-1))/2;
                             end
                         end
-                        del_k_arr_AFS(1) = (k_jifen_arr_AFS(2) - k_jifen_arr_AFS(1)) / 2;
-                        del_k_arr_AFS(end) = (k_jifen_arr_AFS(end) - k_jifen_arr_AFS(end-1)) / 2;
-                        jifenx_2_AFS = sum(jifenx_1_AFS .* del_k_arr_AFS);
-                        jifeny_2_AFS = sum(jifeny_1_AFS .* del_k_arr_AFS);
+                        del_k_arr_breaking(1) = (k_integral_arr_breaking(2) - k_integral_arr_breaking(1)) / 2;
+                        del_k_arr_breaking(end) = (k_integral_arr_breaking(end) - k_integral_arr_breaking(end-1)) / 2;
+                        integralx_2_breaking = sum(integralx_1_breaking .* del_k_arr_breaking);
+                        integraly_2_breaking = sum(integraly_1_breaking .* del_k_arr_breaking);
                          % include breaking stress
-                        tao_tx =  tao_vx + jifenx_2 + jifenx_2_AFS;
-                        tao_ty =  tao_vy + jifeny_2 + jifeny_2_AFS;
+                        tao_tx =  tao_vx + integralx_2 + integralx_2_breaking;
+                        tao_ty =  tao_vy + integraly_2 + integraly_2_breaking;
      
                         tao_t = sqrt(tao_tx^2 + tao_ty^2);
                         if tao_t <= 10^-8
@@ -294,23 +292,23 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
                         end
                         h_the_arr = (cos(the_arr)*cos_taot + sin(the_arr)*sin_taot).^2;
                         h_the_arr(abs(the_arr) > pi/2) = 0;
-                        diedai_after = C_beta * w_arr(i) / rou_w / c_arr(i)^2 * tao_t * h_the_arr; 
-                        beta_g_AFS(i, :) =  C_beta * w_arr_AFS(i) / rou_w / c_arr_AFS(i)^2 * tao_t * h_the_arr;
-                        diedai_after(diedai_after <= 10^(-8)) = 0;
-                        if max(abs(diedai_after-diedai_before)) < 10^(-8)
+                        iteration_after = C_beta * w_arr(i) / rou_w / c_arr(i)^2 * tao_t * h_the_arr; 
+                        beta_g_breaking(i, :) =  C_beta * w_arr_breaking(i) / rou_w / c_arr_breaking(i)^2 * tao_t * h_the_arr;
+                        iteration_after(iteration_after <= 10^(-8)) = 0;
+                        if max(abs(iteration_after-iteration_before)) < 10^(-8)
                             break
                         end
-                        beta_g(i, :) = diedai_after;  %  This one converges faster
+                        beta_g(i, :) = iteration_after;  %  This one converges faster
                     end
                     tao_tx_z(i) = tao_tx; 
                     tao_ty_z(i) = tao_ty;
-                    diedai_n_arr(i) = diedai;
+                    iteration_n_arr(i) = iteration;
                 end
                 
                %% calculate the sea spray
-                jifen_1_lamda_k = zeros(length(k_arr),1);
-                jifen_1_slope= zeros(length(k_arr),1);
-                jifen_1_W= zeros(length(k_arr),1);
+                integral_1_lamda_k = zeros(length(k_arr),1);
+                integral_1_slope= zeros(length(k_arr),1);
+                integral_1_W= zeros(length(k_arr),1);
                 del_k_arr = zeros(length(k_arr),1);
                 if length(k_arr) > 2
                     for kk = 2 : length(k_arr)-1
@@ -321,20 +319,20 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
                 del_k_arr(end) = (k_arr(end) - k_arr(end-1)) / 2;
                 for i = 1 : length(k_arr)
                     fai_arr_slope =fai_k_the_arr(:, i)'  *  k_arr(i) ^4;
-                    jifen_1_slope(i) =2*( sum(fai_arr_slope(2:end-1))*2*pi/36 + (fai_arr_slope(1)+fai_arr_slope(end))*2*pi/36/2) ^0.5;
+                    integral_1_slope(i) =2*( sum(fai_arr_slope(2:end-1))*2*pi/36 + (fai_arr_slope(1)+fai_arr_slope(end))*2*pi/36/2) ^0.5;
                     %%  Muller(2009)
                     S_Muller_k_the =fai_k_the_arr(:, i)'  *  k_arr(i) ^3;
-                    S_Muller_k(i) =2*( sum(S_Muller_k_the(2:end-1))*2*pi/36 + (S_Muller_k_the(1)+S_Muller_k_the(end))*2*pi/36/2) ^0.5;     %这个是算一次积分一次
-                    S_Muller_jifen = S_Muller_k(1:i);
+                    S_Muller_k(i) =2*( sum(S_Muller_k_the(2:end-1))*2*pi/36 + (S_Muller_k_the(1)+S_Muller_k_the(end))*2*pi/36/2) ^0.5;
+                    S_Muller_integral = S_Muller_k(1:i);
                     del_k_arr_s = del_k_arr(1:i);
-                    b_k_s(i)= min(max( 0.01*sum( S_Muller_jifen' .*  del_k_arr_s )^0.5, b_kmin),b_kmax);  %浅水下b
-                    b_k_d(i)=min(max( 0.25*sum( S_Muller_jifen' .* del_k_arr_s )^2.5, b_kmin),b_kmax);    %深水下b
-                    b_k(i)= W_quanzhong_after * b_k_d(i) + (1-W_quanzhong_after) *b_k_s(i);
-                    fai_arr_H =fai_k_the_arr(:, i)' .^0.5 *  k_arr(i) ;   % 饱和谱波陡得到波高
-                    jifen_1_H = sum(fai_arr_H(2:end-1))*2*pi/36 + (fai_arr_H(1)+fai_arr_H(end))*2*pi/36/2;
-                    fai_arr_lamda =beta_g(i, :).*fai_k_the_arr(:, i)' * g ^3 /  c_arr(i)^6 / w_arr(i) / b_k(i) *  k_arr(i) * jifen_1_H ;
+                    b_k_s(i)= min(max( 0.01*sum( S_Muller_integral' .*  del_k_arr_s )^0.5, b_kmin),b_kmax);  
+                    b_k_d(i)=min(max( 0.25*sum( S_Muller_integral' .* del_k_arr_s )^2.5, b_kmin),b_kmax);    
+                    b_k(i)= W_weight_after * b_k_d(i) + (1-W_weight_after) *b_k_s(i);
+                    fai_arr_H =fai_k_the_arr(:, i)' .^0.5 *  k_arr(i) ;   % 
+                    integral_1_H = sum(fai_arr_H(2:end-1))*2*pi/36 + (fai_arr_H(1)+fai_arr_H(end))*2*pi/36/2;
+                    fai_arr_lamda =beta_g(i, :).*fai_k_the_arr(:, i)' * g ^3 /  c_arr(i)^6 / w_arr(i) / b_k(i) *  k_arr(i) * integral_1_H ;
                     %fai_arr_lamda =beta_g(i, :).*fai_k_the_arr(:, i)' * g ^3 /  c_arr(i)^6 / w_arr(i) *  k_arr(i)  / b_k(i) ;
-                    jifen_1_lamda_k(i) = sum(fai_arr_lamda(2:end-1))*2*pi/36 + (fai_arr_lamda(1)+fai_arr_lamda(end))*2*pi/36/2;
+                    integral_1_lamda_k(i) = sum(fai_arr_lamda(2:end-1))*2*pi/36 + (fai_arr_lamda(1)+fai_arr_lamda(end))*2*pi/36/2;
                 end
                 
                 
@@ -343,9 +341,9 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
                 del_k_arr_W(c_arr<2) = 0;
                 
                 del_k_arr(k_arr>10) = 0;
-                b_slope(n_u10_arr) =max( 0.01*sum( jifen_1_slope .* del_k_arr )^0.5, 0.01);
-                W(n_u10_arr)=sum( jifen_1_W .* del_k_arr_W );
-                jifen_2_s0 = sum( jifen_1_lamda_k .* del_k_arr )  * 8 *10 ^(-6);%b=bdeep
+                b_slope(n_u10_arr) =max( 0.01*sum( integral_1_slope .* del_k_arr )^0.5, 0.01);
+                W(n_u10_arr)=sum( integral_1_W .* del_k_arr_W );
+                integral_2_s0 = sum( integral_1_lamda_k .* del_k_arr )  * 8 *10 ^(-6);%b=bdeep
                 %  s0_Kudry = 2.5*10^(-5)*u_star^5;     % Kudryavrev 2011
      
                 
@@ -356,75 +354,75 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
                 tao_wx_z = zeros(length(z_arr),1); 
                 tao_wy_z = zeros(length(z_arr),1);
                 for i = 2 : length(z_arr) 
-                    beta_g_jifen = beta_g(1:i,:); 
-                    k_jifen_arr = k_arr(1:i); 
-                    w_jifen_arr = w_arr(1:i); 
-                    jifenx_1 = zeros(length(k_jifen_arr),1); 
-                    jifeny_1 = zeros(length(k_jifen_arr),1); 
-                    for ii = 1 : length(k_jifen_arr)
-                        k_jifen = k_jifen_arr(ii);
-                        w_jifen = w_jifen_arr(ii);
-                        the_jifen_arr = -pi : 2*pi/36 : pi; 
+                    beta_g_integral = beta_g(1:i,:); 
+                    k_integral_arr = k_arr(1:i); 
+                    w_integral_arr = w_arr(1:i); 
+                    integralx_1 = zeros(length(k_integral_arr),1); 
+                    integraly_1 = zeros(length(k_integral_arr),1); 
+                    for ii = 1 : length(k_integral_arr)
+                        k_integral = k_integral_arr(ii);
+                        w_integral = w_integral_arr(ii);
+                        the_integral_arr = -pi : 2*pi/36 : pi; 
 
                         fai_arr = fai_k_the_arr(:, ii)';
-                        jifenx_arr = beta_g_jifen(ii,:) .* fai_arr * rou_w * w_jifen * k_jifen .* cos(the_jifen_arr);
-                        jifenx_1(ii) = sum(jifenx_arr(2:end-1))*2*pi/36 + (jifenx_arr(1)+jifenx_arr(end))*2*pi/36/2;
-                        jifeny_arr = beta_g_jifen(ii,:) .* fai_arr * rou_w * w_jifen * k_jifen .* sin(the_jifen_arr);
-                        jifeny_1(ii) = sum(jifeny_arr(2:end-1))*2*pi/36 + (jifeny_arr(1)+jifeny_arr(end))*2*pi/36/2;
+                        integralx_arr = beta_g_integral(ii,:) .* fai_arr * rou_w * w_integral * k_integral .* cos(the_integral_arr);
+                        integralx_1(ii) = sum(integralx_arr(2:end-1))*2*pi/36 + (integralx_arr(1)+integralx_arr(end))*2*pi/36/2;
+                        integraly_arr = beta_g_integral(ii,:) .* fai_arr * rou_w * w_integral * k_integral .* sin(the_integral_arr);
+                        integraly_1(ii) = sum(integraly_arr(2:end-1))*2*pi/36 + (integraly_arr(1)+integraly_arr(end))*2*pi/36/2;
                     end
-                    del_k_arr = zeros(length(k_jifen_arr),1);
-                    if length(k_jifen_arr) > 2
-                        for kk = 2 : length(k_jifen_arr)-1
-                            del_k_arr(kk) = (k_jifen_arr(kk+1) - k_jifen_arr(kk-1))/2;
+                    del_k_arr = zeros(length(k_integral_arr),1);
+                    if length(k_integral_arr) > 2
+                        for kk = 2 : length(k_integral_arr)-1
+                            del_k_arr(kk) = (k_integral_arr(kk+1) - k_integral_arr(kk-1))/2;
                         end
                     end
-                    del_k_arr(1) = (k_jifen_arr(2) - k_jifen_arr(1)) / 2;
-                    del_k_arr(end) = (k_jifen_arr(end) - k_jifen_arr(end-1)) / 2;
-                    jifenx_2 = sum(jifenx_1 .* del_k_arr);
-                    jifeny_2 = sum(jifeny_1 .* del_k_arr);
-                    tao_wx_z(i) = jifenx_2;
-                    tao_wy_z(i) = jifeny_2;
+                    del_k_arr(1) = (k_integral_arr(2) - k_integral_arr(1)) / 2;
+                    del_k_arr(end) = (k_integral_arr(end) - k_integral_arr(end-1)) / 2;
+                    integralx_2 = sum(integralx_1 .* del_k_arr);
+                    integraly_2 = sum(integraly_1 .* del_k_arr);
+                    tao_wx_z(i) = integralx_2;
+                    tao_wy_z(i) = integraly_2;
                 end
                 tao_w_z = (tao_wy_z.^2 + tao_wx_z.^2 ).^ 0.5;
                  %% breaking stress
                 for i = 2 : length(z_arr) 
-                    k_jifen_arr_AFS = k_arr_AFS(1:i);
-                    w_jifen_arr_AFS = w_arr_AFS(1:i); 
-                    jifenx_1_AFS = zeros(length(k_jifen_arr_AFS),1); % theta积分结束后，k积分前
-                    jifeny_1_AFS = zeros(length(k_jifen_arr_AFS),1); 
-                    for ii = 1 : length(k_jifen_arr_AFS)
-                        k_jifen_AFS = k_jifen_arr_AFS(ii);
-                        w_jifen_AFS = w_jifen_arr_AFS(ii);
-                        c_jifen_AFS  = w_jifen_AFS/k_jifen_AFS;
-                        the_jifen_arr = -pi : 2*pi/36 : pi; 
-                        lamda_arr =  lamda_AFS_the_arr(:, ii)';
-                        z_AFS = Epslion_b / k_jifen_AFS;
+                    k_integral_arr_breaking = k_arr_breaking(1:i);
+                    w_integral_arr_breaking = w_arr_breaking(1:i); 
+                    integralx_1_breaking = zeros(length(k_integral_arr_breaking),1); %
+                    integraly_1_breaking = zeros(length(k_integral_arr_breaking),1); 
+                    for ii = 1 : length(k_integral_arr_breaking)
+                        k_integral_breaking = k_integral_arr_breaking(ii);
+                        w_integral_breaking = w_integral_arr_breaking(ii);
+                        c_integral_breaking  = w_integral_breaking/k_integral_breaking;
+                        the_integral_arr = -pi : 2*pi/36 : pi; 
+                        lamda_arr =  lamda_breaking_the_arr(:, ii)';
+                        z_breaking = gama / k_integral_breaking;
                         z0 = 10/(exp(1)-1);
-                        if diedai_u ==1
-                            ub = U10 * log((z_AFS+z0)/z0) * h_the_arr.^0.5 - c_jifen_AFS;
+                        if iteration_u ==1
+                            ub = U10 * log((z_breaking+z0)/z0) * h_the_arr.^0.5 - c_integral_breaking;
                             ub = ub .* (ub > 0) ;
                         else
-                            [MIN, I ]=min(abs (z_arr_total-z_AFS));
-                            ub = (u_arr(I))* h_the_arr.^0.5  - c_jifen_AFS;
+                            [MIN, I ]=min(abs (z_arr_total-z_breaking));
+                            ub = (u_arr(I))* h_the_arr.^0.5  - c_integral_breaking;
                             ub = ub .* (ub > 0) ;
                         end
-                        jifenx_arr_AFS = rou_a * 2 * Epslion_b * C_db * ub.^2 .* lamda_arr.* cos(the_jifen_arr) ;   %Kudryavtsev（2014）
-                        jifeny_arr_AFS = rou_a * 2 * Epslion_b * C_db * ub.^2 .* lamda_arr .* sin(the_jifen_arr) ;   %Kudryavtsev（2014）
-                        jifenx_1_AFS(ii) = sum(jifenx_arr_AFS(2:end-1))*2*pi/36 + (jifenx_arr_AFS(1)+jifenx_arr_AFS(end))*2*pi/36/2;
-                        jifeny_1_AFS(ii) = sum(jifeny_arr_AFS(2:end-1))*2*pi/36 + (jifeny_arr_AFS(1)+jifeny_arr_AFS(end))*2*pi/36/2;
+                        integralx_arr_breaking = rou_a * 2 * gama * C_b * ub.^2 .* lamda_arr.* cos(the_integral_arr) ;   %Kudryavtsev（2014）
+                        integraly_arr_breaking = rou_a * 2 * gama * C_b * ub.^2 .* lamda_arr .* sin(the_integral_arr) ;   %Kudryavtsev（2014）
+                        integralx_1_breaking(ii) = sum(integralx_arr_breaking(2:end-1))*2*pi/36 + (integralx_arr_breaking(1)+integralx_arr_breaking(end))*2*pi/36/2;
+                        integraly_1_breaking(ii) = sum(integraly_arr_breaking(2:end-1))*2*pi/36 + (integraly_arr_breaking(1)+integraly_arr_breaking(end))*2*pi/36/2;
                     end
-                    del_k_arr_AFS = zeros(length(k_jifen_arr_AFS),1);
-                    if length(k_jifen_arr_AFS) > 2
-                        for kk = 2 : length(k_jifen_arr_AFS)-1
-                            del_k_arr_AFS(kk) = (k_jifen_arr_AFS(kk+1) - k_jifen_arr_AFS(kk-1))/2;
+                    del_k_arr_breaking = zeros(length(k_integral_arr_breaking),1);
+                    if length(k_integral_arr_breaking) > 2
+                        for kk = 2 : length(k_integral_arr_breaking)-1
+                            del_k_arr_breaking(kk) = (k_integral_arr_breaking(kk+1) - k_integral_arr_breaking(kk-1))/2;
                         end
                     end
-                    del_k_arr_AFS(1) = (k_jifen_arr_AFS(2) - k_jifen_arr_AFS(1)) / 2;
-                    del_k_arr_AFS(end) = (k_jifen_arr_AFS(end) - k_jifen_arr_AFS(end-1)) / 2;
-                    jifenx_2_AFS = sum(jifenx_1_AFS .* del_k_arr_AFS);
-                    jifeny_2_AFS = sum(jifeny_1_AFS .* del_k_arr_AFS);
-                    tao_sx_z(i) = jifenx_2_AFS;
-                    tao_sy_z(i) = jifeny_2_AFS;
+                    del_k_arr_breaking(1) = (k_integral_arr_breaking(2) - k_integral_arr_breaking(1)) / 2;
+                    del_k_arr_breaking(end) = (k_integral_arr_breaking(end) - k_integral_arr_breaking(end-1)) / 2;
+                    integralx_2_breaking = sum(integralx_1_breaking .* del_k_arr_breaking);
+                    integraly_2_breaking = sum(integraly_1_breaking .* del_k_arr_breaking);
+                    tao_sx_z(i) = integralx_2_breaking;
+                    tao_sy_z(i) = integraly_2_breaking;
                 end
                 tao_s_z =( tao_sy_z.^2+tao_sx_z.^2).^0.5;
                 
@@ -440,10 +438,10 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
                 u_star = sqrt(tao/rou_a);% resistive flow rate
                 
                % Characteristic wave height solution
-                jifen_1 = zeros(length(k_arr),1); 
+                integral_1 = zeros(length(k_arr),1); 
                 for i = 1 : length(k_arr)
                     fai_arr = fai_k_the_arr(:, i)' * k_arr(i); 
-                    jifen_1(i) = sum(fai_arr(2:end-1))*2*pi/36 + (fai_arr(1)+fai_arr(end))*2*pi/36/2;
+                    integral_1(i) = sum(fai_arr(2:end-1))*2*pi/36 + (fai_arr(1)+fai_arr(end))*2*pi/36/2;
                 end
 
                 del_k_arr = zeros(length(k_arr),1);
@@ -454,14 +452,14 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
                 end
                 del_k_arr(1) = (k_arr(2) - k_arr(1)) / 2;
                 del_k_arr(end) = (k_arr(end) - k_arr(end-1)) / 2;
-                jifen_2 = sum(jifen_1 .* del_k_arr);
-                Hs = 4*sqrt(jifen_2); 
+                integral_2 = sum(integral_1 .* del_k_arr);
+                Hs = 4*sqrt(integral_2); 
                 b = 0.01; 
                 
              %% to calculate sea spray use U10
-                for diedai_s0 = 1 : 1
+                for iteration_s0 = 1 : 1
                  u_s_before = U10;
-                    s0 = (u_s_before)^3 * jifen_2_s0 ;
+                    s0 = (u_s_before)^3 * integral_2_s0 ;
                     num1 = 20;
                     num3 = 20;
                     z_arr3 = zmax : (10-zmax)/20 : 10; 
@@ -499,29 +497,29 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
 % Fw
                     Fw_arr = zeros(1,length(k_arr));
                     for i = 1 : length(k_arr)
-                        k_jifen = k_arr(i);
+                        k_integral = k_arr(i);
         
                         fai_arr = fai_k_the_arr(:, i)'; 
-                        jifen_arr = beta_g(i,:) .* fai_arr * rou_w * 9.81 * k_jifen;
-                        Fw_arr(i) = sum(jifen_arr(2:end-1))*2*pi/36 + (jifen_arr(1)+jifen_arr(end))*2*pi/36/2;
+                        integral_arr = beta_g(i,:) .* fai_arr * rou_w * 9.81 * k_integral;
+                        Fw_arr(i) = sum(integral_arr(2:end-1))*2*pi/36 + (integral_arr(1)+integral_arr(end))*2*pi/36/2;
                     end
                    %Fws
-                    for i = 1 : length(k_arr_AFS)
-                        k_jifen_AFS = k_arr_AFS(i);
-                        w_jifen_AFS = w_arr_AFS(i);
-                        c_jifen_AFS =c_arr_AFS(i);
-                        z_AFS = Epslion_b / k_jifen_AFS;
-                        if diedai_u ==1
-                            ub = U10 * log((z_AFS+z0)/z0) * h_the_arr.^0.5 - c_jifen_AFS;
+                    for i = 1 : length(k_arr_breaking)
+                        k_integral_breaking = k_arr_breaking(i);
+                        w_integral_breaking = w_arr_breaking(i);
+                        c_integral_breaking =c_arr_breaking(i);
+                        z_breaking = gama / k_integral_breaking;
+                        if iteration_u ==1
+                            ub = U10 * log((z_breaking+z0)/z0) * h_the_arr.^0.5 - c_integral_breaking;
                             ub = ub .* (ub > 0) ;
                         else
-                            [MIN, I ]=min(abs (z_arr_total-z_AFS));
-                            ub = (u_arr(I))* h_the_arr.^0.5  - c_jifen_AFS;
+                            [MIN, I ]=min(abs (z_arr_total-z_breaking));
+                            ub = (u_arr(I))* h_the_arr.^0.5  - c_integral_breaking;
                             ub = ub .* (ub > 0) ;
                         end
-                        lamda_arr =  lamda_AFS_the_arr(:, i)'; 
-                        jifen_arr_AFS = 2 * rou_a * Epslion_b * C_db * ub.^2 .* lamda_arr * c_jifen_AFS  * Epslion_b / delta;   %Kudryavtsev（2014）
-                        Fws_arr(i) = sum(jifen_arr_AFS(2:end-1))*2*pi/36 + (jifen_arr_AFS(1)+jifen_arr_AFS(end))*2*pi/36/2;
+                        lamda_arr =  lamda_breaking_the_arr(:, i)'; 
+                        integral_arr_breaking = 2 * rou_a * gama * C_b * ub.^2 .* lamda_arr * c_integral_breaking  * gama / delta;   %Kudryavtsev（2014）
+                        Fws_arr(i) = sum(integral_arr_breaking(2:end-1))*2*pi/36 + (integral_arr_breaking(1)+integral_arr_breaking(end))*2*pi/36/2;
                     end
                     
                     Fw_arr = Fw_arr+Fws_arr; 
@@ -563,21 +561,21 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
                 
                 u_arr = sqrt(ux_arr.^2 + uy_arr.^2); 
                   %% Iterate wind speed profiles for breaking stresses
-                if diedai_u == 1
-                    u_diedai_before =  U10 * log((z_arr_total+z0)/z0) ;
+                if iteration_u == 1
+                    u_iteration_before =  U10 * log((z_arr_total+z0)/z0) ;
                 end
-                u_diedai_after = u_arr ;
-                if sum(abs(u_diedai_before - u_diedai_after)) <= max(10^(-2),U10/100)  
+                u_iteration_after = u_arr ;
+                if sum(abs(u_iteration_before - u_iteration_after)) <= max(10^(-2),U10/100)  
                     break
                 end
-                u_diedai_before= u_diedai_after;
-                if isnan(u_diedai_before(end))
+                u_iteration_before= u_iteration_after;
+                if isnan(u_iteration_before(end))
                     break
                 end
             end
-            delta_diedai = (U10 - u_arr(end))/u_arr(end);
+            delta_iteration = (U10 - u_arr(end))/u_arr(end);
           
-            tao_vx_new = tao_vx * (1+delta_diedai);
+            tao_vx_new = tao_vx * (1+delta_iteration);
             if abs(u_arr(end) - U10) <= max( U10/1000 ,10^(-2))%Satisfaction of iterative accuracy to calculate wind stress
                 break
             end
@@ -590,7 +588,7 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
                 break
             end
         end
-        if diedai_taov == 200
+        if iteration_taov == 200
             disp('Non Convergence of Iteration')
             %             quit cancel
         end
@@ -607,7 +605,7 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
 
         s0_arr(n_u10_arr) =s0;
         s0_cpmpare(n_u10_arr) =s0_xy ;
-        jifen_2_arr(n_u10_arr) = jifen_2 ;
+        integral_2_arr(n_u10_arr) = integral_2 ;
         u_star.^2 / U10^2
         Cd(n_u10_arr) = u_star.^2 / U10^2;
 
@@ -615,11 +613,7 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
 
 
     %% Cd-U10
-    figure(3);
-    Cd_storage_AFS(n_H_arr,:) = Cd;
-    plot(u10_arr,Cd,'-','linewidth',3,'Color',RGB(fix(n_H_arr/length(H_arr)*256),:)) ; hold on
-    ylabel('Cd'); xlabel('U_1_0 m/s')
-    ylim([0,5]*10^-3);xlim([0,70])
+    Cd_storage_breaking(n_H_arr,:) = Cd;
 
 end
 
