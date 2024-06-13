@@ -16,7 +16,7 @@ load ('k_store.mat')
 %% Cd measurement
 %RGB = [249, 87, 56; 238, 150, 75; 244, 211, 94; 13, 59, 102]/256;
 %% e_AWLBM
-%u10_arr = [0.1 1:1:71]; % more soomth line
+%u10_arr = [0.1 1:1:71]; % more smooth line
 u10_arr = [0.1 1:5:71];
 H_arr = [15 80 500];
 fetch_ = 10^5; % wind fetch
