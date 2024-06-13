@@ -1,8 +1,11 @@
 2D e-AWBLM
+---------------------------------------------------------------------------------
 
 writed by Xu and Yu (2021) PIO
 
 Added the breaking_stress by Zhang and Yu (2024) JPO
+
+---------------------------------------------------------------------------------
 
 ![figure1](https://github.com/anyifang/e-AWBLM/assets/89235013/c6d6a062-bffd-4721-adff-fbc6e1f06bde)
 Figure 1. Sketch of the enhanced atmospheric wave boundary layer model. 
@@ -12,10 +15,13 @@ Figure 3. The wind stress coefficients (a) at 15 m water depth, (b) at 80 m wate
 User can reproduce this figure 3 by ./v1.0/main.m
 .In ./v2.0/main.m, the code that takes less time to compute can be obtained.
 
+---------------------------------------------------------------------------------
 
 Copyright 2024 Coastal Engineering Family, Department of Hydraulic Engineering, Tsinghua University
 
 Please contact with zayf21@mails.tsinghua.edu.cn if you have any problem with the code.
+---------------------------------------------------------------------------------
+
 
 Reference
 
