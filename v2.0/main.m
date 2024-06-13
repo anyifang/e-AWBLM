@@ -24,10 +24,7 @@ clear
 addpath('../data')
 addpath('../function')
 load ('k_store.mat')
-%% Cd measurement
-RGB = othercolor('YlGnBu9');
-figure(3)
-Function_plot_Cd_measure(RGB)
+  
 %% e_AWLBM
 u10_arr = 1:5:71;
 H_arr = [15 80 500];
