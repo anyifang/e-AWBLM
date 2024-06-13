@@ -612,10 +612,10 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
     end
 
 
-    %% Cd-U10
+   
     Cd_storage_breaking(n_H_arr,:) = Cd;
 
 end
-
-
+ %plot Cd-U10 figure3 
+plot_figure3
 
