@@ -124,7 +124,7 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
         end
       %% calculate gama_b
         %gama = gama_mean(n_H_arr)/gama_mean(end)*0.3;
-        gama = gama_b_U_H(U10,H)/gama_b_U_H(U10,H);
+        gama = gama_b_U_H(U10,H)/gama_b_U_H(U10,500);
         %gama = gama_b_U_H_quick(U10,H,k_store)/gama_b_U_H_quick(U10,500,k_store)*0.3;
         %gama = 16*gama_U_H(U10,H)
         gama = min(0.6,gama);
