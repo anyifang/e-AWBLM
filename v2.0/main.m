@@ -1,4 +1,6 @@
 % e_AWBLM to estimate wind stress
+% The calculation of v1.0  takes too much time so we improve the code to
+% make if faster 
 
 % writed by Xu and Yu (2021)
 % include the water depth effect on the Cd through the TMA wave-spectrum
@@ -12,6 +14,8 @@
 % in this equation H(k)= B(k)^0.5 * k
 % thc changed results also have a good agreement with measurement
 
+% most improtantly, the Cd will drop to zore at large wind speed such as in
+% figure3(a)
 
 % Contact with zayf21@mails.tsinghua.edu.cn if you have any problem with
 % code or you have some methods to modify this code.
@@ -626,16 +630,7 @@ for  n_H_arr = 1 : length(H_arr) % different water depth
     end
     
     %% Cd-U10
-    figure(3);
     Cd_storage_breaking(n_H_arr,:) = Cd;
-    plot(u10_arr,Cd,'-','linewidth',3,'Color',RGB(fix(n_H_arr/length(H_arr)*256),:)) ; hold on
-    ylabel('Cd'); xlabel('U_1_0 m/s')
-    ylim([0,5]*10^-3);xlim([0,70])
-    
 end
-RGB = othercolor('Spectral4');
-Function_plot_Cd_measure(RGB)
-img=gcf;
-print(img,'-dpng','-r1200',['./Cd.png'])
-
+plot_figure3
 
