@@ -30,7 +30,3 @@ Xu, Y., and X. Yu, 2021: Enhanced atmospheric wave boundary layer model for eval
 
 Zhang, A. and Yu, X., 2024. A Major Improvement of Atmospheric Wave Boundary Layer Model for Storm Surge Modeling by Including Effect of Wave Breaking on Air–Sea Momentum Exchange. Journal of Physical Oceanography, 54(5), pp.1153-1168.
 
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=PREP-NexT/PREP-SHOT&type=Date)](https://star-history.com/#PREP-NexT/PREP-SHOT&Date)
