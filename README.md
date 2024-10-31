@@ -15,6 +15,9 @@ Figure 3. The wind stress coefficients (a) at 15 m water depth, (b) at 80 m wate
 User can reproduce this figure 3 by ./v1.0/main.m
 .In ./v2.0/main.m, the code that takes less time to compute can be obtained.
 
+![figure8](https://github.com/user-attachments/assets/649e64ad-7cfa-41d7-96aa-a41662d5508e)
+Figure 8. The wind stress coefficient obtained from the e-AWBLM coupled with SWAN1ADCIRC in (a) shallow water depth, (b) medium water depth, and (c) deep water.
+
 ---------------------------------------------------------------------------------
 
 Copyright 2024 Coastal Engineering Family, Department of Hydraulic Engineering, Tsinghua University
