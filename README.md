@@ -22,7 +22,7 @@ Figure 8. The wind stress coefficient obtained from the e-AWBLM coupled with SWA
 
 Copyright 2024 Coastal Engineering Family, Department of Hydraulic Engineering, Tsinghua University
 
-Please contact with zayf21@mails.tsinghua.edu.cn if you have any problem with the code.
+Please contact with zayfang@foxmail.com if you have any problem with the code.
 
 ---------------------------------------------------------------------------------
 
